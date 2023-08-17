@@ -43,8 +43,8 @@ class Scheduler:
         self.spinBox_cycles_left = QtWidgets.QSpinBox(central_widget)
         self.spinBox_cycles_left.setGeometry(QtCore.QRect(460, y_coordinate, 141, 60))
         self.spinBox_cycles_left.setMinimum(-1)
-        self.spinBox_cycles_left.setMaximum(10000)
-        self.spinBox_cycles_left.setSingleStep(10)
+        self.spinBox_cycles_left.setMaximum(100000)
+        self.spinBox_cycles_left.setSingleStep(1000)
         self.spinBox_cycles_left.setObjectName("spinBox_cycles_left")
 
         self.label_relay_state = QtWidgets.QLabel(central_widget)
