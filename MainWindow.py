@@ -20,7 +20,7 @@
 import os
 from datetime import datetime
 from PyQt5 import QtCore, QtWidgets
-from scheduler import Scheduler
+from scheduler import Scheduler, TouchSpinBox
 
 class Ui_MainWindow(object):
     def __init__(self):
@@ -67,10 +67,11 @@ class Ui_MainWindow(object):
         # Global Settings
         settingsLayout = QtWidgets.QHBoxLayout()
         self.label_default_time = QtWidgets.QLabel("Default On-Time (m):")
-        self.spinBox_default_time = QtWidgets.QSpinBox()
+        self.spinBox_default_time = TouchSpinBox()
         self.spinBox_default_time.setMinimum(1)
         self.spinBox_default_time.setMaximum(10000)
         self.spinBox_default_time.setValue(5)
+        self.spinBox_default_time.setFixedWidth(170)
 
         self.btn_start = QtWidgets.QPushButton("Start Cycle")
         self.btn_start.clicked.connect(self.start_cycle)
