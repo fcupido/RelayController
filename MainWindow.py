@@ -29,7 +29,7 @@ class Ui_MainWindow(object):
         self.timer.timeout.connect(self.tick)
         self.current_relay_index = -1
         self.time_remaining = 0
-        self.log_file = "relays.log"
+        self.log_file = "logs/relays.log"
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("Relay Controller")
