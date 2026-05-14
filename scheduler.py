@@ -32,14 +32,14 @@ class TouchSpinBox(QtWidgets.QWidget):
 
         self.layout = QtWidgets.QHBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(2)
+        self.layout.setSpacing(5)
 
         self.btn_minus = QtWidgets.QPushButton("-")
         self.btn_minus.setFixedWidth(40)
         self.btn_minus.clicked.connect(self.decrement)
 
         self.line_edit = QtWidgets.QLineEdit()
-        self.line_edit.setFixedWidth(80)
+        self.line_edit.setMinimumWidth(80)
         self.line_edit.setAlignment(QtCore.Qt.AlignCenter)
         self.line_edit.editingFinished.connect(self.on_editing_finished)
 
@@ -145,7 +145,25 @@ class Scheduler:
         self.label_relay_state.setFixedWidth(80)
         self.label_relay_state.setFixedHeight(30)
 
+        self.cycle_count = 0
+        self.label_cycle_count = QtWidgets.QLabel(parent_widget)
+        self.label_cycle_count.setObjectName(f"label_cycle_count_{index}")
+        self.label_cycle_count.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_cycle_count.setFixedWidth(80)
+        self.update_cycle_count_display()
+
         self.set_off_ui()
+
+    def update_cycle_count_display(self):
+        self.label_cycle_count.setText(str(self.cycle_count))
+
+    def increment_cycle_count(self):
+        self.cycle_count += 1
+        self.update_cycle_count_display()
+
+    def reset_cycle_count(self):
+        self.cycle_count = 0
+        self.update_cycle_count_display()
 
     def set_on_ui(self):
         self.label_relay_state.setText(" ON ")

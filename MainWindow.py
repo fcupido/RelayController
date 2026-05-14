@@ -89,10 +89,27 @@ class Ui_MainWindow(object):
 
         # Headers
         headerLayout = QtWidgets.QHBoxLayout()
-        headerLayout.addWidget(QtWidgets.QLabel("Enable Relay"), 1)
-        headerLayout.addWidget(QtWidgets.QLabel("On-Time (m)"), 0)
-        headerLayout.addSpacing(40)
-        headerLayout.addWidget(QtWidgets.QLabel("Status"), 0)
+        headerLayout.setContentsMargins(0, 0, 0, 0)
+        headerLayout.setSpacing(10)
+
+        header_enable = QtWidgets.QLabel("Enable Relay")
+        headerLayout.addWidget(header_enable, 1)
+
+        header_ontime = QtWidgets.QLabel("On-Time (m)")
+        header_ontime.setFixedWidth(170)
+        header_ontime.setAlignment(QtCore.Qt.AlignCenter)
+        headerLayout.addWidget(header_ontime, 0)
+
+        header_cycles = QtWidgets.QLabel("Cycles")
+        header_cycles.setFixedWidth(80)
+        header_cycles.setAlignment(QtCore.Qt.AlignCenter)
+        headerLayout.addWidget(header_cycles, 0)
+
+        header_status = QtWidgets.QLabel("Status")
+        header_status.setFixedWidth(80)
+        header_status.setAlignment(QtCore.Qt.AlignCenter)
+        headerLayout.addWidget(header_status, 0)
+
         headerLayout.addStretch()
         layout.addLayout(headerLayout)
 
@@ -101,14 +118,17 @@ class Ui_MainWindow(object):
         relay_scroll.setWidgetResizable(True)
         relay_scroll_widget = QtWidgets.QWidget()
         self.relay_list_layout = QtWidgets.QVBoxLayout(relay_scroll_widget)
+        self.relay_list_layout.setContentsMargins(0, 0, 0, 0)
 
         for i in range(1, 8):
             sch = Scheduler(relay_scroll_widget, i)
             self.schedulers.append(sch)
             row = QtWidgets.QHBoxLayout()
+            row.setContentsMargins(0, 0, 0, 0)
+            row.setSpacing(10)
             row.addWidget(sch.checkBox_enable, 1)
             row.addWidget(sch.spinBox_on_time, 0)
-            row.addSpacing(20)
+            row.addWidget(sch.label_cycle_count, 0)
             row.addWidget(sch.label_relay_state, 0)
             row.addStretch()
             self.relay_list_layout.addLayout(row)
@@ -166,7 +186,7 @@ class Ui_MainWindow(object):
         if self.current_relay_index != -1:
             sch = self.schedulers[self.current_relay_index]
             sch.turn_off()
-            self.log(f"Relay {sch.index} turned OFF (Cycle Stopped)")
+            self.log(f"Relay {sch.index} turned OFF (Cycle Stopped) - Cycle Count: {sch.cycle_count}")
 
         self.current_relay_index = -1
         self.btn_start.setEnabled(True)
@@ -174,12 +194,15 @@ class Ui_MainWindow(object):
         self.log("Cycle Stopped")
         self.statusBar.showMessage("Cycle Stopped")
 
+        for sch in self.schedulers:
+            sch.reset_cycle_count()
+
     def next_relay(self):
         # Turn off current
         if self.current_relay_index != -1:
             sch = self.schedulers[self.current_relay_index]
             sch.turn_off()
-            self.log(f"Relay {sch.index} turned OFF")
+            self.log(f"Relay {sch.index} turned OFF - Cycle Count: {sch.cycle_count}")
 
         # Find next enabled
         found = False
@@ -204,8 +227,9 @@ class Ui_MainWindow(object):
         if found:
             sch = self.schedulers[self.current_relay_index]
             self.time_remaining = sch.get_on_time(self.spinBox_default_time.value())
+            sch.increment_cycle_count()
             sch.turn_on()
-            self.log(f"Relay {sch.index} turned ON for {self.time_remaining} minutes")
+            self.log(f"Relay {sch.index} turned ON for {self.time_remaining} minutes - Cycle Count: {sch.cycle_count}")
             self.statusBar.showMessage(f"Relay {sch.index} active: {self.time_remaining}m left")
             self.timer.start(60000) # 1 minute tick
         else:
