@@ -19,7 +19,7 @@
 
 import os
 from datetime import datetime
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtPrintSupport
 from scheduler import Scheduler, TouchSpinBox
 
 class Ui_MainWindow(object):
@@ -54,6 +54,8 @@ class Ui_MainWindow(object):
         self.setupLogsTab()
 
         self.layout.addWidget(self.tabs)
+
+        self.refresh_logs()
         MainWindow.setCentralWidget(self.centralWidget)
 
         self.statusBar = QtWidgets.QStatusBar(MainWindow)
@@ -142,11 +144,23 @@ class Ui_MainWindow(object):
         self.logViewer = QtWidgets.QPlainTextEdit()
         self.logViewer.setReadOnly(True)
 
+        buttonsLayout = QtWidgets.QHBoxLayout()
+
         self.btn_refresh_logs = QtWidgets.QPushButton("Refresh Logs")
         self.btn_refresh_logs.clicked.connect(self.refresh_logs)
 
+        self.btn_clear_logs = QtWidgets.QPushButton("Clear Logs")
+        self.btn_clear_logs.clicked.connect(self.clear_logs)
+
+        self.btn_print_logs = QtWidgets.QPushButton("Print Logs")
+        self.btn_print_logs.clicked.connect(self.print_logs)
+
+        buttonsLayout.addWidget(self.btn_refresh_logs)
+        buttonsLayout.addWidget(self.btn_clear_logs)
+        buttonsLayout.addWidget(self.btn_print_logs)
+
         layout.addWidget(self.logViewer)
-        layout.addWidget(self.btn_refresh_logs)
+        layout.addLayout(buttonsLayout)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -162,17 +176,54 @@ class Ui_MainWindow(object):
         self.refresh_logs()
 
     def refresh_logs(self):
-        if os.path.exists(self.log_file):
+        log_exists = os.path.exists(self.log_file)
+        log_empty = True
+        if log_exists:
             try:
+                file_size = os.path.getsize(self.log_file)
+                log_empty = file_size == 0
                 with open(self.log_file, "r") as f:
-                    # For large logs, we might want to only show the last N lines
-                    # but for now, reading all is what was requested.
-                    self.logViewer.setPlainText(f.read())
+                    # If log is very large, only read the last 100KB to keep UI responsive
+                    max_read = 100 * 1024
+                    if file_size > max_read:
+                        f.seek(file_size - max_read)
+                        content = f.read()
+                        # Ensure we don't start in the middle of a line
+                        first_newline = content.find('\n')
+                        if first_newline != -1:
+                            content = "[...truncated...]\n" + content[first_newline+1:]
+                    else:
+                        content = f.read()
+
+                    self.logViewer.setPlainText(content)
                     self.logViewer.verticalScrollBar().setValue(self.logViewer.verticalScrollBar().maximum())
             except Exception as e:
                 self.logViewer.setPlainText(f"Error reading logs: {e}")
         else:
             self.logViewer.setPlainText("No logs yet.")
+
+        if hasattr(self, 'btn_clear_logs'):
+            self.btn_clear_logs.setEnabled(not log_empty)
+
+    def clear_logs(self):
+        if os.path.exists(self.log_file) and os.path.getsize(self.log_file) > 0:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            dirname = os.path.dirname(self.log_file)
+            basename = os.path.basename(self.log_file)
+            name, ext = os.path.splitext(basename)
+            new_basename = f"{name}_{timestamp}{ext}"
+            new_filename = os.path.join(dirname, new_basename)
+
+            os.rename(self.log_file, new_filename)
+            # Create a new empty log file
+            open(self.log_file, 'w').close()
+            self.refresh_logs()
+
+    def print_logs(self):
+        printer = QtPrintSupport.QPrinter()
+        dialog = QtPrintSupport.QPrintDialog(printer)
+        if dialog.exec_() == QtPrintSupport.QPrintDialog.Accepted:
+            self.logViewer.print_(printer)
 
     def start_cycle(self):
         self.btn_start.setEnabled(False)
